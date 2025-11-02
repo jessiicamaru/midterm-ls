@@ -10,7 +10,14 @@ void parse_options(int argc, char *argv[], Options *opts, char ***paths, int *pa
                 switch (*c) {
                     case 'a': opts->show_all = 1; break;
                     case 'A': opts->almost_all = 1; break;
-                    case 'R': opts->recursive = 1; break;
+                    case 'R':
+                        opts->recursive = 1;
+                        opts->list_dir_as_file = 0; 
+                        break;
+                    case 'd':
+                        opts->list_dir_as_file = 1;
+                        opts->recursive = 0; 
+                        break;
                     case 'r': opts->reverse = 1; break;
                     case 't': opts->sort_time = 1; break;
                     case 'S': opts->sort_size = 1; break;
@@ -28,7 +35,6 @@ void parse_options(int argc, char *argv[], Options *opts, char ***paths, int *pa
                         break;
                     case 'c': opts->sort_ctime = 1; opts->sort_atime = 0; break;
                     case 'u': opts->sort_atime = 1; opts->sort_ctime = 0; break;
-                    case 'd': opts->list_dir_as_file = 1; opts->recursive = 0; break;
                     case 'f': opts->unsorted = 1; break;
                     case 'k': opts->kilobyte_unit = 1; opts->human_read = 0; break;
                     case 'q': opts->quote_nonprint = 1; opts->raw_nonprint = 0; break;
