@@ -115,21 +115,21 @@ void display_directory(const char *path, Options *opts) {
         if (opts->long_list)
             print_file_info(files[i].name, st, opts);
         else {
-            printf("%s", files[i].name);
-
-            // -q / -w: xử lý ký tự không in được
             if (opts->quote_nonprint || opts->raw_nonprint) {
                 for (char *p = files[i].name; *p; p++) {
                     if (!isprint(*p)) {
-                        if (opts->quote_nonprint) putchar('?');
-                        else putchar(*p);
+                        if (opts->quote_nonprint)
+                            putchar('?');
+                        else
+                            putchar(*p);
                     } else {
                         putchar(*p);
                     }
                 }
+            } else {
+                printf("%s", files[i].name);
             }
 
-            // -F: phân loại
             if (opts->classify) {
                 if (S_ISDIR(st->st_mode)) printf("/");
                 else if (S_ISLNK(st->st_mode)) printf("@");
