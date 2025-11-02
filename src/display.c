@@ -1,6 +1,7 @@
 #include "ls.h"
 #include <sys/types.h>
 #include <locale.h>
+#include <ctype.h>
 
 typedef struct {
     char name[256];

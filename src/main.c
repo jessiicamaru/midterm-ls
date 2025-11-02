@@ -1,8 +1,8 @@
 #include "ls.h"
-
-setlocale(LC_COLLATE, "");
+#include <locale.h>
 
 int main(int argc, char *argv[]) {
+    setlocale(LC_COLLATE, "");
     Options opts = {0};
     char **paths = NULL;
     int path_count = 0;
