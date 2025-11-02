@@ -1,5 +1,7 @@
 #include "ls.h"
 
+setlocale(LC_COLLATE, "");
+
 int main(int argc, char *argv[]) {
     Options opts = {0};
     char **paths = NULL;

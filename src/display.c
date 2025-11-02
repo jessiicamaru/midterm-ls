@@ -1,5 +1,6 @@
 #include "ls.h"
 #include <sys/types.h>
+#include <locale.h>
 
 typedef struct {
     char name[256];
@@ -9,7 +10,7 @@ typedef struct {
 /* ---------------- SORTING FUNCTIONS ---------------- */
 
 int compare_name(const void *a, const void *b) {
-    return strcmp(((FileEntry*)a)->name, ((FileEntry*)b)->name);
+    return strcoll(((FileEntry*)a)->name, ((FileEntry*)b)->name);
 }
 
 int compare_time(const void *a, const void *b) {
