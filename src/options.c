@@ -37,7 +37,6 @@ void parse_options(int argc, char *argv[], Options *opts, char ***paths, int *pa
         }
     }
 
-    // thu thập danh sách path
     *paths = malloc(sizeof(char*) * (*path_count));
     int idx = 0;
     for (int i = 1; i < argc; i++) {
