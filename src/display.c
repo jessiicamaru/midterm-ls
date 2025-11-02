@@ -31,6 +31,17 @@ int compare_size(const void *a, const void *b) {
 /* ---------------- MAIN DIRECTORY DISPLAY ---------------- */
 
 void display_directory(const char *path, Options *opts) {
+    struct stat path_stat;
+    if (stat(path, &path_stat) != 0) {
+        perror(path);
+        return;
+    }
+
+    if (opts->list_dir_as_file) {
+        display_file(path, opts);
+        return;
+    }
+
     DIR *dir = opendir(path);
     if (!dir) {
         perror(path);
@@ -42,8 +53,14 @@ void display_directory(const char *path, Options *opts) {
     int count = 0;
 
     while ((entry = readdir(dir)) != NULL) {
-        if (!opts->show_all && entry->d_name[0] == '.')
-            continue;
+        if (!opts->show_all) {
+            if (opts->almost_all) {
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+                    continue;
+            } else if (entry->d_name[0] == '.') {
+                continue;
+            }
+        }
 
         files = realloc(files, sizeof(FileEntry) * (count + 1));
         if (!files) {
@@ -65,26 +82,25 @@ void display_directory(const char *path, Options *opts) {
     }
     closedir(dir);
 
-    // Sắp xếp theo flag
-    if (opts->sort_time)
-        qsort(files, count, sizeof(FileEntry), compare_time);
-    else if (opts->sort_size)
-        qsort(files, count, sizeof(FileEntry), compare_size);
-    else
-        qsort(files, count, sizeof(FileEntry), compare_name);
+    if (!opts->unsorted) {
+        if (opts->sort_time)
+            qsort(files, count, sizeof(FileEntry), compare_time);
+        else if (opts->sort_size)
+            qsort(files, count, sizeof(FileEntry), compare_size);
+        else
+            qsort(files, count, sizeof(FileEntry), compare_name);
 
-    // Đảo ngược nếu có flag -r
-    if (opts->reverse) {
-        for (int i = 0; i < count / 2; i++) {
-            FileEntry tmp = files[i];
-            files[i] = files[count - 1 - i];
-            files[count - 1 - i] = tmp;
+        if (opts->reverse) {
+            for (int i = 0; i < count / 2; i++) {
+                FileEntry tmp = files[i];
+                files[i] = files[count - 1 - i];
+                files[count - 1 - i] = tmp;
+            }
         }
     }
 
     printf("%s:\n", path);
 
-    // In danh sách file
     for (int i = 0; i < count; i++) {
         struct stat *st = &files[i].st;
 
@@ -92,14 +108,26 @@ void display_directory(const char *path, Options *opts) {
             printf("%8lu ", st->st_ino);
 
         if (opts->show_blocks)
-            printf("%4ld ", st->st_blocks / 2); // 512 bytes mỗi block
+            printf("%4ld ", st->st_blocks / 2);
 
         if (opts->long_list)
             print_file_info(files[i].name, st, opts);
         else {
             printf("%s", files[i].name);
 
-            // -F: thêm ký hiệu phân loại
+            // -q / -w: xử lý ký tự không in được
+            if (opts->quote_nonprint || opts->raw_nonprint) {
+                for (char *p = files[i].name; *p; p++) {
+                    if (!isprint(*p)) {
+                        if (opts->quote_nonprint) putchar('?');
+                        else putchar(*p);
+                    } else {
+                        putchar(*p);
+                    }
+                }
+            }
+
+            // -F: phân loại
             if (opts->classify) {
                 if (S_ISDIR(st->st_mode)) printf("/");
                 else if (S_ISLNK(st->st_mode)) printf("@");
@@ -112,7 +140,6 @@ void display_directory(const char *path, Options *opts) {
     if (!opts->long_list)
         printf("\n");
 
-    // -R: hiển thị đệ quy
     if (opts->recursive) {
         for (int i = 0; i < count; i++) {
             if (S_ISDIR(files[i].st.st_mode)

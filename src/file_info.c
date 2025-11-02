@@ -17,27 +17,42 @@ void print_file_info(const char *path, struct stat *st, Options *opts) {
     if (st->st_mode & S_IWOTH) perms[8] = 'w';
     if (st->st_mode & S_IXOTH) perms[9] = 'x';
 
-    struct passwd *pw = getpwuid(st->st_uid);
-    struct group *gr = getgrgid(st->st_gid);
+    time_t display_time = st->st_mtime;
+    if (opts->sort_ctime) display_time = st->st_ctime;
+    else if (opts->sort_atime) display_time = st->st_atime;
+
     char timebuf[64];
-    strftime(timebuf, sizeof(timebuf), "%b %d %H:%M", localtime(&st->st_mtime));
+    strftime(timebuf, sizeof(timebuf), "%b %d %H:%M", localtime(&display_time));
 
-    printf("%s %3ld %-8s %-8s %8ld %s %s\n",
-           perms,
-           (long)st->st_nlink,
-           pw ? pw->pw_name : "unknown",
-           gr ? gr->gr_name : "unknown",
-           (long)st->st_size,
-           timebuf,
-           path);
+    char sizebuf[32];
+    if (opts->human_read) {
+        human_readable(st->st_size, sizebuf, sizeof(sizebuf));
+    } else if (opts->kilobyte_unit) {
+        snprintf(sizebuf, sizeof(sizebuf), "%ldK", st->st_size / 1024);
+    } else {
+        snprintf(sizebuf, sizeof(sizebuf), "%ld", st->st_size);
+    }
 
-    if (opts->classify) {
-        if (S_ISDIR(st->st_mode)) 
-            printf("/");
-        else if (S_ISLNK(st->st_mode)) 
-            printf("@");
-        else if (st->st_mode & S_IXUSR) 
-            printf("*");
+    if (opts->numeric_id) {
+        printf("%s %3ld %5d %5d %8s %s %s\n",
+               perms,
+               (long)st->st_nlink,
+               st->st_uid,
+               st->st_gid,
+               sizebuf,
+               timebuf,
+               path);
+    } else {
+        struct passwd *pw = getpwuid(st->st_uid);
+        struct group *gr = getgrgid(st->st_gid);
+        printf("%s %3ld %-8s %-8s %8s %s %s\n",
+               perms,
+               (long)st->st_nlink,
+               pw ? pw->pw_name : "unknown",
+               gr ? gr->gr_name : "unknown",
+               sizebuf,
+               timebuf,
+               path);
     }
 }
 

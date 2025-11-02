@@ -12,6 +12,16 @@ typedef struct {
     int show_inode;    // -i
     int show_blocks;   // -s
     int classify;      // -F
+
+    int almost_all;        // -A
+    int sort_ctime;        // -c
+    int list_dir_as_file;  // -d
+    int unsorted;          // -f
+    int kilobyte_unit;     // -k
+    int numeric_id;        // -n
+    int quote_nonprint;    // -q
+    int raw_nonprint;      // -w
+    int sort_atime;        // -u
 } Options;
 
 
